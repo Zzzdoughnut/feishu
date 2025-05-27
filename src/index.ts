@@ -98,26 +98,20 @@ basekit.addField({
     }
   },
   formItems: [
-    {
-      key: 'provider',
-      label: t('providerLabel'),
-      component: FieldComponent.SingleSelect,
-      props: {
-        options: [
-          { label: t('providerDeepseek'), value: 'deepseek' },
-          { label: t('providerVolc'), value: 'volc' },
-          { label: t('providerSilicon'), value: 'silicon' },
-          { label: t('providerAli'), value: 'ali' },
-          { label: t('providerTencent'), value: 'tencent' },
-          { label: t('providerTencentCloud'), value: 'tencentCloud' },
-          { label: t('providerOpenRouter'), value: 'openRouter' },
-        ],
-        defaultValue: 'deepseek',
-      },
-      validator: {
-        required: false,
-      },
-    },
+    // {
+    //   key: 'provider',
+    //   label: t('providerLabel'),
+    //   component: FieldComponent.SingleSelect,
+    //   props: {
+    //     options: [
+    //       { label: t('providerVolc'), value: 'volc' },
+    //     ],
+    //     defaultValue: 'deepseek',
+    //   },
+    //   validator: {
+    //     required: false,
+    //   },
+    // },
     // 删除整个 customUrl 表单项
     // {
     //   key: 'customUrl',
@@ -131,61 +125,61 @@ basekit.addField({
     //     required: false,
     //   },
     // },
-    {
-      key: 'apiKey',
-      label: t('apiKeyLabel'),
-      component: FieldComponent.Input,
-      props: {
-        placeholder: t('apiKeyPlaceholder'),
-      },
-      tooltips: [
-        {
-          type: 'text',
-          content: t('apiKeyTip')
-        },
-        {
-          type: 'link',
-          text: t('apiKeyDoc'),
-          link: 'https://bytedance.larkoffice.com/docx/XvICd2i9woXlGOxp9xBcAmyNnXd'
-        }
-      ],
-      validator: {
-        required: true,
-      },
-    },
-    {
-      key: 'model',
-      label: `${t('modelLabel')} ${t('modelNote')}`,
-      component: FieldComponent.SingleSelect,
-      props: {
-        options: [
-          { label: 'deepseek-chat', value: 'deepseek-chat' },
-          { label: 'deepseek-reasoner', value: 'deepseek-reasoner' },
-        ],
-        defaultValue: 'deepseek-chat',
-      },
-      validator: {
-        required: true,
-      },
-    },
-    {
-      key: 'customModel',
-      label: t('modelCustomLabel'),
-      component: FieldComponent.Input,
-      props: {
-        placeholder: t('modelCustomPlaceholder'),
-        type: 'text',
-      },
-      validator: {
-        required: false,
-      },
-    },
+    // {
+    //   key: 'apiKey',
+    //   label: t('apiKeyLabel'),
+    //   component: FieldComponent.Input,
+    //   props: {
+    //     placeholder: t('apiKeyPlaceholder'),
+    //   },
+    //   tooltips: [
+    //     {
+    //       type: 'text',
+    //       content: t('apiKeyTip')
+    //     },
+    //     {
+    //       type: 'link',
+    //       text: t('apiKeyDoc'),
+    //       link: 'https://bytedance.larkoffice.com/docx/XvICd2i9woXlGOxp9xBcAmyNnXd'
+    //     }
+    //   ],
+    //   validator: {
+    //     required: true,
+    //   },
+    // },
+    // {
+    //   key: 'model',
+    //   label: `${t('modelLabel')} ${t('modelNote')}`,
+    //   component: FieldComponent.SingleSelect,
+    //   props: {
+    //     options: [
+    //       { label: 'deepseek-chat', value: 'deepseek-chat' },
+    //       { label: 'deepseek-reasoner', value: 'deepseek-reasoner' },
+    //     ],
+    //     defaultValue: 'deepseek-chat',
+    //   },
+    //   validator: {
+    //     required: true,
+    //   },
+    // },
+    // {
+    //   key: 'customModel',
+    //   label: t('modelCustomLabel'),
+    //   component: FieldComponent.Input,
+    //   props: {
+    //     placeholder: t('modelCustomPlaceholder'),
+    //     type: 'text',
+    //   },
+    //   validator: {
+    //     required: false,
+    //   },
+    // },
     {
       key: 'inputField',
       label: t('inputFieldLabel'),
       component: FieldComponent.FieldSelect,
       props: {
-        supportType: [FieldType.Text],
+        supportType: [FieldType.Attachment],
       },
       validator: {
         required: true,
@@ -206,35 +200,73 @@ basekit.addField({
   ],
   // 定义返回结果类型为文本
   resultType: {
-    type: FieldType.Text,// 定义捷径的返回结果类型为多行文本字段
+    type: FieldType.Text, // 保持返回类型为文本，因为我们仍然返回AI分析结果
   },
   // 执行函数
   execute: async (formItemParams, context) => {
-    const { apiKey, model, customModel, inputField, prompt, provider } = formItemParams;
+    //定义固定的apikey
+    const apiKey = '7d2e34f4-0995-4538-995f-b671a1d7dce9';
+    const model = 'ep-20250507093817-2bw6t';
+    const provider = 'volc';
+    const { customModel, prompt, inputField } = formItemParams;
     const { fetch } = context;
 
     try {
-      // 修复：使用更可靠的方式处理输入字段
-      let inputValue = '';
-      
-      // 检查输入字段是否为数组并包含文本内容
+      // 修复：使用更可靠的方式处理附件字段
+      let attachmentInfo = null;
+      // 检查输入字段是否为数组并包含附件内容
       if (Array.isArray(inputField) && inputField.length > 0) {
-        // 遍历所有输入项，确保捕获所有文本内容
-        for (const item of inputField) {
-          if (item.type === 'text' && item.text) {
-            inputValue += item.text;
-          }
+        // 获取第一个附件
+        const attachment = inputField[0];
+        if (attachment && attachment.tmp_url) {
+          attachmentInfo = {
+            url: attachment.tmp_url,
+            name: attachment.name,
+            size: attachment.size,
+            type: attachment.type
+          };
         }
       }
       
-      console.log("处理的输入文本:", inputValue); // 添加日志以便调试
+      console.log("处理的附件信息:", attachmentInfo); // 添加日志以便调试
 
-      if (!inputValue) {
+      if (!attachmentInfo) {
         return {
           code: FieldCode.Success,
           data: '',
         };
       }
+
+      // 获取图片内容并转换为base64
+      const imageResponse = await fetch(attachmentInfo.url);
+      if (!imageResponse.ok) {
+        console.log("获取图片失败:", imageResponse.status);
+        return {
+          code: FieldCode.Error,
+          data: "获取图片失败，请重试",
+          msg: "图片获取失败"
+        };
+      }
+
+      // 获取图片的二进制数据
+      const imageArrayBuffer = await imageResponse.arrayBuffer();
+      
+      // 将ArrayBuffer转换为Base64字符串
+      // 1. 创建一个Uint8Array视图
+      const uint8Array = new Uint8Array(imageArrayBuffer);
+      // 2. 将每个字节转换为字符
+      let binaryString = '';
+      uint8Array.forEach(byte => {
+        binaryString += String.fromCharCode(byte);
+      });
+      // 3. 使用btoa函数将二进制字符串转换为base64
+      const base64Image = btoa(binaryString);
+      
+      // 确定图片MIME类型
+      const mimeType = attachmentInfo.type || 'image/jpeg'; // 默认为jpeg
+      const dataURI = `data:${mimeType};base64,${base64Image}`;
+      
+      console.log("图片已转换为base64格式");
 
       const apiEndpoints = {
         deepseek: 'https://api.deepseek.com/v1/chat/completions',
@@ -247,16 +279,20 @@ basekit.addField({
       };
 
       // 修改这行，移除 customUrl 相关逻辑
-      const apiUrl = apiEndpoints[provider?.value || 'deepseek'];
+      const apiUrl = apiEndpoints[provider];
 
-      const isReasonerModel = (customModel || model.value) === 'deepseek-reasoner';
+      //const isReasonerModel = (customModel || model.value) === 'deepseek-reasoner';
+      const isReasonerModel = customModel === 'deepseek-reasoner' || model === 'ep-20250507093817-2bw6t';
 
       const requestBody = {
-        model: customModel || model.value,
+        model: customModel || model,
         messages: [
           { 
             role: 'user', 
-            content: isReasonerModel ? `${prompt}\n${inputValue}` : inputValue 
+            content: [
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: dataURI } }
+            ]
           }
         ],
         stream: false,
@@ -264,10 +300,13 @@ basekit.addField({
       };
 
       if (!isReasonerModel) {
+        requestBody.messages[0].content = [
+          { type: 'image_url', image_url: { url: dataURI } }
+        ];
         requestBody.messages.unshift({ role: 'system', content: prompt });
       }
 
-      console.log('Request Body:', JSON.stringify(requestBody, null, 2));
+      console.log('Request Body:', JSON.stringify({...requestBody, messages: [{...requestBody.messages[0], content: "[图片内容已省略]"}]}));
 
       const response = await fetch(apiUrl, {
         method: 'POST',
